@@ -1,162 +1,266 @@
 # The Unofficial Guide — Project 1
 
-> **How to use this template:**
-> Complete each section *after* you've built and tested the corresponding part of your system.
-> Do not write placeholder text — if a section isn't done yet, leave it blank and come back.
-> Every section below is required for submission. One-liners will not receive full credit.
-
----
-
 ## Domain
 
-<!-- What topic or category of knowledge does your system cover?
-     Why is this knowledge valuable, and why is it hard to find through official channels?
-     Example: "Student reviews of CS professors at [university] — useful because official
-     course descriptions don't reflect teaching style, exam difficulty, or workload." -->
+This project focuses on student reviews of professors at DePauw University collected from Rate My Professors.
+
+This knowledge is valuable because students often want information about teaching style, workload, grading fairness, exam difficulty, responsiveness, and overall classroom experience before registering for courses. Official university resources provide course descriptions and faculty information but do not include student perspectives. This RAG system makes professor reviews searchable and answerable through natural language questions.
 
 ---
 
 ## Document Sources
 
-<!-- List every source you collected documents from.
-     Be specific: include URLs, subreddit names, forum thread titles, or file names.
-     Aim for variety — sources that together cover different subtopics or perspectives. -->
-
-| # | Source | Type | URL or file path |
-|---|--------|------|-----------------|
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
-| 4 | | | |
-| 5 | | | |
-| 6 | | | |
-| 7 | | | |
-| 8 | | | |
-| 9 | | | |
-| 10 | | | |
+| #  | Source                 | Type               | URL or File Path             |
+| -- | ---------------------- | ------------------ | ---------------------------- |
+| 1  | Andrea Sununu Reviews  | Rate My Professors | https://www.ratemyprofessors.com/professor/612108    |
+| 2  | Brian Howard Reviews   | Rate My Professors | https://www.ratemyprofessors.com/professor/227705    |
+| 3  | Chris White Reviews    | Rate My Professors | https://www.ratemyprofessors.com/professor/659436    |
+| 4  | Dave Berque Reviews    | Rate My Professors | https://www.ratemyprofessors.com/professor/18270    |
+| 5  | Guangjun Qu Reviews    | Rate My Professors | https://www.ratemyprofessors.com/professor/1483070    |
+| 6  | Harry Brown Reviews    | Rate My Professors | https://www.ratemyprofessors.com/professor/695924    |
+| 7  | Melanie Finney Reviews | Rate My Professors | https://www.ratemyprofessors.com/professor/680021 |
+| 8  | Ophelia Goma Reviews   | Rate My Professors | https://www.ratemyprofessors.com/professor/916240   |
+| 9  | Ron Dye Reviews        | Rate My Professors | https://www.ratemyprofessors.com/professor/595062        |
+| 10 | Tamara Stasik Reviews  | Rate My Professors | https://www.ratemyprofessors.com/professor/1841545    |
 
 ---
 
 ## Chunking Strategy
 
-<!-- Describe your chunking approach with enough specificity that someone else could reproduce it.
-     Include:
-     - Chunk size (characters or tokens) and why that size fits your documents
-     - Overlap size and why (or why not) you used overlap
-     - Any preprocessing you did before chunking (e.g., stripping HTML, removing headers)
-     - What your final chunk count was across all documents -->
+**Chunk size:** Initially 300 characters
 
-**Chunk size:**
+**Overlap:** Initially 50 characters
 
-**Overlap:**
+**Why these choices fit the documents:**
 
-**Why these choices fit your documents:**
+The project uses professor reviews, which are short opinion-based documents. I initially used fixed-size character chunking with overlap to preserve context. After testing, I found that this approach frequently split reviews in the middle of words and sentences, reducing retrieval quality.
 
-**Final chunk count:**
+I switched to paragraph-based chunking because each review naturally represents a complete thought. This preserved context and improved semantic retrieval performance.
+
+**Final chunk count:** 95 chunks across 10 documents
+
+### Sample Chunks
+
+**Source:** brian_howard.txt
+
+> I can say that Professor Howard is the best professor I have at DePauw. He is dedicated. He even writes a book for his students. Very detailed. Gives good feedback. Quizzes and exams are not difficult at all.
+
+**Source:** dave_berque.txt
+
+> Berque is a stand up professor. I've taken multiple courses with him and been thoroughly impressed. He's extremely timely with replying outside of class time and very helpful with providing additional feedback.
+
+**Source:** harry_brown.txt
+
+> Absolutely fantastic professor. Very helpful outside of class. Projects are designed with other classes in mind. Strongly recommended.
+
+**Source:** ron_dye.txt
+
+> Totally laid back professor. Awesome help during office hours. I'd recommend taking one of his classes.
+
+**Source:** guangjun_qu.txt
+
+> Very hard professor who needs everything done exactly as he likes. Very tough grader and difficult exams.
 
 ---
 
 ## Embedding Model
 
-<!-- Name the embedding model you used and explain your choice.
-     Then answer: if you were deploying this system for real users and cost wasn't a constraint,
-     what tradeoffs would you weigh in choosing a different model?
-     Consider: context length limits, multilingual support, accuracy on domain-specific text,
-     latency, and local vs. API-hosted. -->
+**Model Used:** all-MiniLM-L6-v2 (Sentence Transformers)
 
-**Model used:**
+I selected all-MiniLM-L6-v2 because it runs locally, requires no API key, and provides strong semantic retrieval performance for short text documents.
 
-**Production tradeoff reflection:**
+### Production Tradeoff Reflection
+
+If cost were not a constraint, I would consider larger embedding models that provide better retrieval accuracy, stronger multilingual support, and improved understanding of domain-specific language. The tradeoff would be higher latency, greater computational requirements, and potentially higher operating costs.
+
+---
+
+## Retrieval Test Results
+
+### Query 1
+
+**Question:** Which professor provides useful feedback?
+
+**Top Retrieved Sources:**
+
+* brian_howard.txt
+* harry_brown.txt
+* guangjun_qu.txt
+
+**Why Retrieval Was Relevant:**
+
+The retrieved chunks contained explicit references to feedback quality and helpfulness. Brian Howard's reviews specifically mentioned "good feedback," making retrieval highly relevant.
+
+### Query 2
+
+**Question:** Which professor has difficult exams?
+
+**Top Retrieved Sources:**
+
+* guangjun_qu.txt
+* ophelia_goma.txt
+
+**Why Retrieval Was Relevant:**
+
+Retrieved reviews directly discussed exam difficulty and grading standards. Guangjun Qu's reviews frequently described challenging coursework and strict grading.
+
+### Query 3
+
+**Question:** Which professor is most helpful outside class?
+
+**Top Retrieved Sources:**
+
+* harry_brown.txt
+* dave_berque.txt
+* ron_dye.txt
+
+**Why Retrieval Was Relevant:**
+
+Retrieved chunks contained references to office hours, responsiveness, and willingness to help students outside class.
 
 ---
 
 ## Grounded Generation
 
-<!-- Explain how your system enforces grounding — how does it prevent the LLM from answering
-     beyond the retrieved documents?
-     Describe both your system prompt (what instruction you gave the model) and any structural
-     choices (e.g., how you formatted the context, whether you filtered low-relevance chunks).
-     Do not just say "I told it to use the documents" — show the actual instruction or explain
-     the mechanism. -->
+### System Prompt Grounding Instruction
 
-**System prompt grounding instruction:**
+The model was instructed:
 
-**How source attribution is surfaced in the response:**
+> "Answer the question using ONLY the provided context. If the answer is not in the context, say 'I don't have enough information to answer.'"
+
+The retrieved chunks are passed directly to the model as context, preventing it from relying on outside knowledge.
+
+### Source Attribution
+
+Source filenames are stored as metadata in ChromaDB. After generating a response, the application displays all retrieved source files used to answer the question.
+
+---
+
+## Example Responses
+
+### Example 1
+
+**Question:** Which professor provides useful feedback?
+
+**Answer:**
+
+The system identified Brian Howard because multiple reviews described him as providing clear grading criteria and useful feedback.
+
+**Sources:**
+
+* brian_howard.txt
+* harry_brown.txt
+* guangjun_qu.txt
+
+### Example 2
+
+**Question:** Which professor has the most challenging exams?
+
+**Answer:**
+
+The system identified Guangjun Qu because reviews described his courses as difficult and noted strict grading standards.
+
+**Sources:**
+
+* guangjun_qu.txt
+* ophelia_goma.txt
+
+### Out-of-Scope Example
+
+**Question:** Which professor teaches the most sections each semester?
+
+**Answer:**
+
+"I don't have enough information to answer."
+
+This information was not available in the review documents.
+
+---
+
+## Query Interface
+
+The project uses a Gradio web interface.
+
+### Input
+
+A natural-language question about professor reviews.
+
+### Output
+
+* Generated answer
+* Retrieved source documents
+
+### Example Interaction
+
+**User:**
+
+Which professor provides useful feedback?
+
+**System:**
+
+Brian Howard appears to provide the most useful feedback because reviews explicitly mention his clear grading criteria and good feedback.
+
+**Sources:**
+
+* brian_howard.txt
+* harry_brown.txt
 
 ---
 
 ## Evaluation Report
 
-<!-- Run your 5 test questions from planning.md through your system and record the results.
-     Be honest — a partially accurate or inaccurate result that you explain well is more
-     valuable than a suspiciously perfect result. -->
-
-| # | Question | Expected answer | System response (summarized) | Retrieval quality | Response accuracy |
-|---|----------|-----------------|------------------------------|-------------------|-------------------|
-| 1 | | | | | |
-| 2 | | | | | |
-| 3 | | | | | |
-| 4 | | | | | |
-| 5 | | | | | |
-
-**Retrieval quality:** Relevant / Partially relevant / Off-target  
-**Response accuracy:** Accurate / Partially accurate / Inaccurate
+| # | Question                                                            | Expected Answer                          | System Response (Summarized)                                        | Retrieval Quality  | Response Accuracy  |
+| - | ------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------- | ------------------ | ------------------ |
+| 1 | Which professor is considered easiest according to student reviews? | Ron Dye                                  | Identified Ron Dye based on lenient grading comments                | Relevant           | Accurate           |
+| 2 | Which professor provides the most useful feedback?                  | Brian Howard                             | Identified Brian Howard due to explicit feedback references         | Relevant           | Accurate           |
+| 3 | Which professor has the most challenging exams?                     | Guangjun Qu                              | Identified Guangjun Qu as having difficult exams and strict grading | Relevant           | Partially Accurate |
+| 4 | Which professor is best for beginners?                              | Professor described as beginner-friendly | System responded that insufficient information was available        | Partially Relevant | Accurate           |
+| 5 | Which professor is hardest to contact outside class?                | Professor described as unavailable       | System responded that insufficient information was available        | Partially Relevant | Accurate           |
 
 ---
 
 ## Failure Case Analysis
 
-<!-- Identify at least one question where retrieval or generation did not work as expected.
-     Write a specific explanation of *why* it failed, tied to a part of the pipeline.
+### Question That Failed
 
-     "The answer was wrong" is not an explanation.
+Which professor is best for beginners?
 
-     "The relevant information was split across a chunk boundary, so retrieval returned
-     only half the context — the model didn't have enough to answer correctly" is an explanation.
+### What the System Returned
 
-     "The embedding model treated the professor's nickname as out-of-vocabulary and returned
-     results from an unrelated review" is an explanation. -->
+"I don't have enough information to answer."
 
-**Question that failed:**
+### Root Cause
 
-**What the system returned:**
+The retrieval stage returned reviews discussing helpfulness and supportiveness, but none explicitly discussed beginner students or introductory-level teaching. Because the generation prompt enforced grounding, the model correctly refused to make unsupported assumptions.
 
-**Root cause (tied to a specific pipeline stage):**
+### Potential Fix
 
-**What you would change to fix it:**
+I would collect more reviews discussing beginner experiences, increase the number of retrieved chunks, and experiment with hybrid retrieval combining semantic and keyword search.
 
 ---
 
 ## Spec Reflection
 
-<!-- Reflect on how planning.md shaped your implementation.
-     Answer both questions with at least 2–3 sentences each. -->
+### One Way the Spec Helped
 
-**One way the spec helped you during implementation:**
+The planning document helped define the architecture before implementation. Having the retrieval strategy, chunking plan, and evaluation questions prepared in advance made development more structured and easier to debug.
 
-**One way your implementation diverged from the spec, and why:**
+### One Way the Implementation Diverged
+
+The original plan used fixed-size character chunking with overlap. During testing, I discovered that this produced fragmented chunks that split reviews across boundaries. I switched to paragraph-based chunking because it better preserved complete student opinions and improved retrieval quality.
 
 ---
 
 ## AI Usage
 
-<!-- Describe at least 2 specific instances where you used an AI tool during this project.
-     For each: what did you give the AI as input, what did it produce, and what did you
-     change, override, or direct differently?
+### Instance 1
 
-     "I used Claude to help me code" is not sufficient.
-     "I gave Claude my Chunking Strategy section from planning.md and asked it to implement
-     chunk_text(). It returned a function using a fixed character split. I overrode the
-     chunk size from 500 to 200 because my documents are short reviews, not long guides." -->
+* **What I gave the AI:** The document structure, chunking strategy, and Milestone 3 requirements.
+* **What it produced:** Python code for document loading and fixed-size chunking.
+* **What I changed or overrode:** I replaced character-based chunking with paragraph-based chunking after observing fragmented chunks during testing.
 
-**Instance 1**
+### Instance 2
 
-- *What I gave the AI:*
-- *What it produced:*
-- *What I changed or overrode:*
-
-**Instance 2**
-
-- *What I gave the AI:*
-- *What it produced:*
-- *What I changed or overrode:*
+* **What I gave the AI:** The retrieval approach, embedding model choice, and Milestone 4 requirements.
+* **What it produced:** Code for embedding chunks using all-MiniLM-L6-v2 and storing them in ChromaDB.
+* **What I changed or overrode:** I added metadata-based source attribution and improved the generation prompt to better compare professors and avoid unsupported answers.
