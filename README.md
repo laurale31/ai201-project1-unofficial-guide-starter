@@ -1,4 +1,4 @@
-# The Unofficial Guide — Project 1
+# DePauw Professor Review Search
 
 ## Domain
 
